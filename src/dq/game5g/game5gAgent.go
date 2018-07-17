@@ -17,108 +17,6 @@ import (
 	"sync"
 )
 
-type ShowGame struct {
-	GameId int
-	Score  int
-}
-
-//当前进行的游戏表(展示性)
-type ShowGameList struct {
-	lock      *sync.RWMutex
-	bm        *list.List
-	size      int
-	limitSize int
-}
-
-func NewShowGameList(limitsize int) *ShowGameList {
-	return &ShowGameList{
-		lock:      new(sync.RWMutex),
-		bm:        list.New(),
-		size:      0,
-		limitSize: limitsize,
-	}
-}
-
-func (a *ShowGameList) AddShowGame(gameid int, score int) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
-	if a.bm.Len() == 0 {
-		tem := ShowGame{GameId: gameid, Score: score}
-		a.bm.PushBack(tem)
-
-		return
-	}
-
-	if a.bm.Len() >= a.limitSize {
-		little := a.bm.Back()
-		littlesg := little.Value.(ShowGame)
-		if score <= littlesg.Score {
-			return
-		}
-	}
-
-	for e := a.bm.Front(); e != nil; e = e.Next() {
-
-		sg := e.Value.(ShowGame)
-		if score >= sg.Score {
-			tem := ShowGame{GameId: gameid, Score: score}
-			a.bm.InsertBefore(tem, e)
-
-			if a.bm.Len() > a.limitSize {
-				a.bm.Remove(a.bm.Back())
-			}
-
-			return
-		}
-
-	}
-
-	if a.bm.Len() < a.limitSize {
-		tem := ShowGame{GameId: gameid, Score: score}
-		a.bm.InsertAfter(tem, a.bm.Back())
-
-	}
-
-}
-func (a *ShowGameList) RemoveShowGame(gameid int) {
-	a.lock.Lock()
-	defer a.lock.Unlock()
-
-	for e := a.bm.Front(); e != nil; e = e.Next() {
-
-		sg := e.Value.(ShowGame)
-		if gameid == sg.GameId {
-
-			a.bm.Remove(e)
-			return
-		}
-
-	}
-}
-func (a *ShowGameList) GetShowGame(count int) []ShowGame {
-	a.lock.RLock()
-	defer a.lock.RUnlock()
-
-	showGames := make([]ShowGame, 0)
-
-	addcount := 0
-
-	for e := a.bm.Front(); e != nil; e = e.Next() {
-
-		sg := e.Value.(ShowGame)
-
-		showGames = append(showGames, sg)
-
-		addcount++
-		if addcount >= count {
-			return showGames
-		}
-
-	}
-	return showGames
-}
-
 //游戏部分
 type Game5GAgent struct {
 	conn network.Conn
@@ -127,11 +25,9 @@ type Game5GAgent struct {
 
 	handles map[string]func(data *datamsg.MsgBase)
 
-	Games    *utils.BeeMap //游戏
-	Players  *utils.BeeMap //游戏中的玩家
-	Creators *utils.BeeMap //创建了游戏，但是还不是玩家
+	Games   *utils.BeeMap //游戏
+	Players *utils.BeeMap //游戏中的玩家
 
-	Showgames *ShowGameList
 }
 
 func (a *Game5GAgent) GetConnectId() int {
@@ -146,9 +42,6 @@ func (a *Game5GAgent) Init() {
 
 	a.Games = utils.NewBeeMap()
 	a.Players = utils.NewBeeMap()
-	a.Creators = utils.NewBeeMap()
-
-	a.Showgames = NewShowGameList(30)
 
 	//time.Time.After()
 
@@ -160,13 +53,8 @@ func (a *Game5GAgent) Init() {
 	//创建游戏
 	a.handles["NewGame"] = a.DoNewGameData
 
-	//自己创建游戏
-	a.handles["CS_CreateRoom"] = a.DoCreateRoomData
-
 	//检查是否在游戏中
 	a.handles["CheckGame"] = a.DoCheckGameData
-	//检查是否在游戏中
-	a.handles["CS_CheckGoToGame"] = a.DoCheckGoToGameData
 
 	//玩家进来
 	a.handles["CS_GoIn"] = a.DoGoInData
@@ -176,79 +64,7 @@ func (a *Game5GAgent) Init() {
 	//玩家走棋
 	a.handles["CS_DoGame5G"] = a.DoDoGame5GData
 
-	//获取当前正在进行的游戏信息
-	a.handles["CS_GetGamingInfo"] = a.DoGetGamingInfoData
-
 }
-
-func (a *Game5GAgent) DoGetGamingInfoData(data *datamsg.MsgBase) {
-
-	h2 := &datamsg.CS_GetGamingInfo{}
-	err := json.Unmarshal([]byte(data.JsonData), h2)
-	if err != nil {
-		log.Info(err.Error())
-		return
-	}
-	//---------------
-	//if( a.Games > 0)
-	items := a.Showgames.GetShowGame(h2.Count)
-
-	jd := &datamsg.SC_GetGamingInfo{}
-	jd.GameInfo = make([]datamsg.MsgGame5GingInfo, 0)
-	count := 0
-	for _, v := range items {
-		if count >= h2.Count {
-			break
-		}
-		//sg := v
-		g := a.Games.Get(v.GameId)
-		if g == nil {
-			continue
-		}
-
-		game := g.(*Game5GLogic)
-		if game.State == Game5GState_Gaming {
-			gameinfo := datamsg.MsgGame5GingInfo{}
-			gameinfo.PlayerOneName = game.Player[0].Name
-			gameinfo.PlayerTwoName = game.Player[1].Name
-			gameinfo.GameId = v.GameId
-			gameinfo.ScoreOne = game.Player[0].SeasonScore
-			gameinfo.ScoreTwo = game.Player[1].SeasonScore
-			gameinfo.AvatarOne = game.Player[0].AvatarUrl
-			gameinfo.AvatarTwo = game.Player[1].AvatarUrl
-			gameinfo.RankNumOne = game.Player[0].RankNum
-			gameinfo.RankNumTwo = game.Player[1].RankNum
-			
-			gameinfo.GameName = "game_" + strconv.Itoa(gameinfo.GameId)
-			jd.GameInfo = append(jd.GameInfo, gameinfo)
-			count++
-		}
-
-	}
-	data.ModeType = "Client"
-	data.MsgType = "SC_GetGamingInfo"
-
-	a.WriteMsgBytes(datamsg.NewMsg1Bytes(data, jd))
-
-}
-
-////获取当前进行中的游戏信息
-//type CS_GetGamingInfo struct {
-//	Count int //数量
-//}
-
-////当前进行中的游戏信息
-//type MsgGame5GingInfo struct {
-//	GameId        int
-//	PlayerOneName string
-//	PlayerTwoName string
-//	Score         int
-//}
-
-////当前进行中的游戏信息
-//type SC_GetGamingInfo struct {
-//	GameInfo []MsgGame5GingInfo
-//}
 
 func (a *Game5GAgent) DoDoGame5GData(data *datamsg.MsgBase) {
 
@@ -387,69 +203,6 @@ func (a *Game5GAgent) DoGoInData(data *datamsg.MsgBase) {
 		return
 	}
 	a.Players.Set(data.Uid, player)
-	a.Creators.Delete(data.Uid)
-
-}
-
-//客户端主动检查是否在游戏中(从其他渠道获取游戏信息,进入游戏)
-func (a *Game5GAgent) DoCheckGoToGameData(data *datamsg.MsgBase) {
-
-	h2 := &datamsg.CS_CheckGoToGame{}
-	err := json.Unmarshal([]byte(data.JsonData), h2)
-	if err != nil {
-		log.Info(err.Error())
-		return
-	}
-
-	data.ModeType = "Client"
-	data.MsgType = "SC_CheckGoToGame"
-	jd := &datamsg.SC_CheckGoToGame{}
-	jd.GameId = h2.GameId
-
-	if utils.Milliseconde()-h2.CreateGameTime > 1000*60*30 {
-		jd.Code = 0
-		jd.Err = "time out"
-		a.WriteMsgBytes(datamsg.NewMsg1Bytes(data, jd))
-		return
-	}
-
-	game := a.Games.Get(h2.GameId)
-	if game == nil {
-
-		jd.Code = 0
-		jd.Err = "no game"
-		a.WriteMsgBytes(datamsg.NewMsg1Bytes(data, jd))
-		return
-	}
-
-	if a.Creators.Check(data.Uid) == false {
-		player := a.Players.Get(data.Uid)
-		if player == nil {
-			jd.Code = 1
-			jd.Err = "succ"
-			a.WriteMsgBytes(datamsg.NewMsg1Bytes(data, jd))
-			return
-		}
-		jd.Code = 0
-		jd.Err = "you have another game"
-		a.WriteMsgBytes(datamsg.NewMsg1Bytes(data, jd))
-		return
-
-	} else {
-		//		game := a.Games.Get(a.Creators.Get(data.Uid))
-		//		if game == nil || game.GameId == h2.GameId{
-		//			a.Creators.Delete(data.Uid)
-		//			jd.Code = 1
-		//			jd.Err = "succ"
-		//			a.WriteMsgBytes(datamsg.NewMsg1Bytes(data, jd))
-		//			return
-		//		}
-
-		jd.Code = 0
-		jd.Err = "you have another game"
-		a.WriteMsgBytes(datamsg.NewMsg1Bytes(data, jd))
-		return
-	}
 
 }
 
@@ -457,72 +210,18 @@ func (a *Game5GAgent) DoCheckGoToGameData(data *datamsg.MsgBase) {
 func (a *Game5GAgent) DoCheckGameData(data *datamsg.MsgBase) {
 
 	//log.Info("----DoCheckGameData--")
-	if a.Creators.Check(data.Uid) == false {
-		player := a.Players.Get(data.Uid)
-		if player == nil {
-			return
-		}
-		if player.(*Game5GPlayer).Game == nil {
-			return
-		}
-		game := player.(*Game5GPlayer).Game
-		if game.State >= Game5GState_Result {
-			return
-		}
-
-		//发送信息
-		data1 := &datamsg.MsgBase{}
-		data1.ModeType = "Client"
-		data1.MsgType = "SC_NewGame"
-		data1.Uid = data.Uid
-		data1.ConnectId = data.ConnectId
-		jd := &datamsg.SC_NewGame{}
-		jd.GameId = player.(*Game5GPlayer).Game.GameId
-
-		a.WriteMsgBytes(datamsg.NewMsg1Bytes(data1, jd))
-	} else {
-		game := a.Games.Get(a.Creators.Get(data.Uid))
-		if game == nil {
-			a.Creators.Delete(data.Uid)
-			return
-		}
-		//game := player.(*Game5GPlayer).Game
-		if game.(*Game5GLogic).State >= Game5GState_Result {
-			return
-		}
-
-		//发送信息
-		data1 := &datamsg.MsgBase{}
-		data1.ModeType = "Client"
-		data1.MsgType = "SC_NewGame"
-		data1.Uid = data.Uid
-		data1.ConnectId = data.ConnectId
-		jd := &datamsg.SC_NewGame{}
-		jd.GameId = (a.Creators.Get(data.Uid)).(int)
-
-		a.WriteMsgBytes(datamsg.NewMsg1Bytes(data1, jd))
-	}
-
-}
-func (a *Game5GAgent) DoCreateRoomData(data *datamsg.MsgBase) {
-
-	if a.Creators.Check(data.Uid) == true {
+	player := a.Players.Get(data.Uid)
+	if player == nil {
 		return
 	}
-	a.Creators.Set(data.Uid, -1)
+	if player.(*Game5GPlayer).Game == nil {
+		return
+	}
+	game := player.(*Game5GPlayer).Game
+	if game.State >= Game5GState_Result {
+		return
+	}
 
-	log.Info("-DoCreateRoomData-data.Uid----%d", data.Uid)
-
-	//time conf.Conf.Game5GInfo.Time
-	time := int(conf.Conf.Game5GInfo["CreateRoom_Time"].(float64))
-	everytime := int(conf.Conf.Game5GInfo["CreateRoom_EveryTime"].(float64))
-
-	game := NewGame5GLogic_CreateRoom(a, data.Uid, time, everytime, data.Uid)
-
-	a.Games.Set(game.GameId, game)
-	a.Creators.Set(data.Uid, game.GameId)
-
-	//
 	//发送信息
 	data1 := &datamsg.MsgBase{}
 	data1.ModeType = "Client"
@@ -530,7 +229,8 @@ func (a *Game5GAgent) DoCreateRoomData(data *datamsg.MsgBase) {
 	data1.Uid = data.Uid
 	data1.ConnectId = data.ConnectId
 	jd := &datamsg.SC_NewGame{}
-	jd.GameId = game.GameId
+	jd.GameId = player.(*Game5GPlayer).Game.GameId
+
 	a.WriteMsgBytes(datamsg.NewMsg1Bytes(data1, jd))
 
 }

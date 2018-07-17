@@ -383,9 +383,6 @@ func (game *Game5GLogic) gameStart() {
 
 	timer.AddCallback(time.Millisecond*3000, game.ChangeGameTurn)
 
-	score := (game.Player[0].SeasonScore + game.Player[1].SeasonScore) / 2
-	game.GameAgent.Showgames.AddShowGame(game.GameId, score)
-
 }
 
 //时间到
@@ -543,7 +540,6 @@ func (game *Game5GLogic) dismissGame() {
 	for _, v := range game.Player {
 		if v != nil {
 			game.GameAgent.Players.Delete(v.Uid)
-			game.GameAgent.Creators.Delete(v.Uid)
 		}
 	}
 	allObserve := game.Observer.Items()
@@ -552,11 +548,9 @@ func (game *Game5GLogic) dismissGame() {
 			game.GameAgent.Players.Delete(v.(*Game5GPlayer).Uid)
 		}
 	}
-	game.GameAgent.Creators.Delete(game.CreateId)
 
 	game.GameAgent.Games.Delete(game.GameId)
 
-	game.GameAgent.Showgames.RemoveShowGame(game.GameId)
 }
 
 //时间到
