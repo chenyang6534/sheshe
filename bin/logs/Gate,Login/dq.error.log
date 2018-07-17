@@ -1,0 +1,5 @@
+2018-07-17T14:40:37+08:00 [dq] [E] [db.go:39] Error 1049: Unknown database 'sheshe' 
+dq/db/db.go:39
+dq/db/db.go:25
+sync/once.go:44
+dq/app/app.go:71

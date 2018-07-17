@@ -1,0 +1,28 @@
+2018-07-17T14:40:37+08:00 [dq] [I] [app.go:149] dq starting up
+2018-07-17T14:40:37+08:00 [dq] [I] [app.go:151] runtime.GOOS:windows
+2018-07-17T14:40:37+08:00 [dq] [I] [app.go:153] ---models:2
+2018-07-17T14:40:37+08:00 [dq] [I] [app.go:162] new model :Gate
+2018-07-17T14:40:37+08:00 [dq] [I] [gate.go:75] WSAddr::1117
+2018-07-17T14:40:37+08:00 [dq] [I] [tcp_server.go:82] ------Listen:127.0.0.1:1234
+2018-07-17T14:40:37+08:00 [dq] [I] [ws_server.go:164] ------Listen::1117
+2018-07-17T14:40:37+08:00 [dq] [I] [app.go:162] new model :Login
+2018-07-17T14:40:37+08:00 [dq] [D] [tcp_client.go:42] invalid ConnNum, reset to 1
+2018-07-17T14:40:37+08:00 [dq] [D] [tcp_client.go:46] invalid ConnectInterval, reset to 3s
+2018-07-17T14:40:37+08:00 [dq] [D] [tcp_client.go:50] invalid PendingWriteNum, reset to 200
+2018-07-17T14:40:37+08:00 [dq] [I] [serverAgent.go:61] --register modetype:Login
+2018-07-17T14:40:47+08:00 [dq] [D] [app.go:214] dq closing down (signal: interrupt) 2
+2018-07-17T14:40:47+08:00 [dq] [D] [loginAgent.go:216] read message: read tcp 127.0.0.1:57338->127.0.0.1:1234: use of closed network connection
+2018-07-17T14:42:41+08:00 [dq] [I] [app.go:149] dq starting up
+2018-07-17T14:42:41+08:00 [dq] [I] [app.go:151] runtime.GOOS:windows
+2018-07-17T14:42:41+08:00 [dq] [I] [app.go:153] ---models:2
+2018-07-17T14:42:41+08:00 [dq] [I] [app.go:162] new model :Gate
+2018-07-17T14:42:41+08:00 [dq] [I] [gate.go:75] WSAddr::1117
+2018-07-17T14:42:41+08:00 [dq] [I] [tcp_server.go:82] ------Listen:127.0.0.1:1234
+2018-07-17T14:42:41+08:00 [dq] [I] [ws_server.go:164] ------Listen::1117
+2018-07-17T14:42:41+08:00 [dq] [I] [app.go:162] new model :Login
+2018-07-17T14:42:41+08:00 [dq] [D] [tcp_client.go:42] invalid ConnNum, reset to 1
+2018-07-17T14:42:41+08:00 [dq] [D] [tcp_client.go:46] invalid ConnectInterval, reset to 3s
+2018-07-17T14:42:41+08:00 [dq] [D] [tcp_client.go:50] invalid PendingWriteNum, reset to 200
+2018-07-17T14:42:41+08:00 [dq] [I] [serverAgent.go:61] --register modetype:Login
+2018-07-17T14:42:44+08:00 [dq] [D] [app.go:214] dq closing down (signal: interrupt) 2
+2018-07-17T14:42:44+08:00 [dq] [D] [serverAgent.go:201] read message: read tcp 127.0.0.1:1234->127.0.0.1:57356: use of closed network connection
