@@ -35,7 +35,7 @@ type MsgPlayerInfo struct {
 	SeasonScore int
 	RankNum     int
 	AvatarUrl   string
-	FirstQiZi   int
+	SkinId      int
 	SecondQiZi  int
 	IsAndroid   int
 }
@@ -67,21 +67,9 @@ type CS_GoOut struct {
 	GameId int
 }
 
-//走棋11
-type CS_DoGame5G struct {
-	X int
-	Y int
-}
-
 //获取当前进行中的游戏信息
 type CS_GetGamingInfo struct {
 	Count int //数量
-}
-
-//查看能否进入此房间
-type CS_CheckGoToGame struct {
-	GameId         int
-	CreateGameTime int64
 }
 
 //获取任务奖励
@@ -149,25 +137,6 @@ type SC_CheckGoToGame struct {
 	Err    string //不能进入原因
 }
 
-//当前进行中的游戏信息
-type MsgGame5GingInfo struct {
-	GameId        int
-	GameName      string
-	PlayerOneName string
-	PlayerTwoName string
-	ScoreOne      int
-	ScoreTwo      int
-	RankNumOne    int
-	RankNumTwo    int
-	AvatarOne     string
-	AvatarTwo     string
-}
-
-//当前进行中的游戏信息
-type SC_GetGamingInfo struct {
-	GameInfo []MsgGame5GingInfo
-}
-
 type SC_SerchPlayer struct {
 	Heads []string
 }
@@ -228,27 +197,19 @@ type GameStateChangeInfo struct {
 //玩家
 type MsgGame5GPlayerInfo struct {
 	//基本数据
-	Uid             int
-	Name            string
-	Gold            int64
-	WinCount        int
-	LoseCount       int
-	SeasonScore     int
-	RankNum         int
-	AvatarUrl       string
-	QiZiId          int
-	Qizi_move       int
-	Qizi_move_trail int
-	Qizi_floor      int
-	Qizi_lastplay   int
-	Beiyongtime     int
-	Steptime        int
+	Uid         int
+	Name        string
+	Gold        int64
+	WinCount    int
+	LoseCount   int
+	SeasonScore int
+	RankNum     int
+	AvatarUrl   string
+	SkinId      int
 
 	//游戏中数据
-	SeatIndex  int //座位号
-	PlayerType int //玩家类型 //玩家类型 1表示玩家 2表示旁观者
-	Time       int //剩余总时间
-	EveryTime  int //剩余的每次操作时间
+	SeatIndex int //座位号
+
 }
 
 //游戏信息
@@ -258,19 +219,11 @@ type MsgGame5GInfo struct {
 	//游戏ID
 	GameId int
 	//游戏状态
-	State     int
-	Time      int //总时间
-	EveryTime int //每次操作时间
-	//该下棋的人的位置号
-	GameSeatIndex int
+	State int
+	Time  int //总时间
+
 	//游戏模式
 	GameMode int
-
-	//棋盘信息
-	QiPan [15][15]int
-	//
-	//步数信息
-	StepNum [15][15]int
 
 	//游戏创建时间戳
 	CreateGameTime int64
@@ -283,9 +236,8 @@ type SC_PlayerGoIn struct {
 
 //游戏信息
 type SC_GameInfo struct {
-	PlayerInfo  []MsgGame5GPlayerInfo
-	ObserveInfo []MsgGame5GPlayerInfo
-	GameInfo    MsgGame5GInfo
+	PlayerInfo []MsgGame5GPlayerInfo
+	GameInfo   MsgGame5GInfo
 }
 
 //游戏开始
@@ -293,22 +245,6 @@ type SC_GameStart struct {
 	GameSeatIndex     int
 	SeatIndex0_qiziid int
 	SeatIndex1_qiziid int
-}
-
-//切换下棋的人
-type SC_ChangeGameTurn struct {
-	GameSeatIndex int
-	Time          int
-	EveryTime     int
-}
-
-//走棋
-type SC_DoGame5G struct {
-	GameSeatIndex int
-	X             int
-	Y             int
-	Time          int
-	StepNum       int
 }
 
 //游戏结束

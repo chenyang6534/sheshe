@@ -2,19 +2,14 @@ package game5g
 
 import (
 	"dq/network"
-	"strconv"
 
 	"dq/datamsg"
 	"dq/log"
 	"encoding/json"
 	"net"
-	//"strconv"
-	//"time"
-	"container/list"
-	"dq/conf"
+
 	"dq/db"
 	"dq/utils"
-	"sync"
 )
 
 //游戏部分
@@ -60,41 +55,6 @@ func (a *Game5GAgent) Init() {
 	a.handles["CS_GoIn"] = a.DoGoInData
 	//玩家退出游戏
 	a.handles["CS_GoOut"] = a.DoGoOutData
-
-	//玩家走棋
-	a.handles["CS_DoGame5G"] = a.DoDoGame5GData
-
-}
-
-func (a *Game5GAgent) DoDoGame5GData(data *datamsg.MsgBase) {
-
-	h2 := &datamsg.CS_DoGame5G{}
-	err := json.Unmarshal([]byte(data.JsonData), h2)
-	if err != nil {
-		log.Info(err.Error())
-		return
-	}
-	//---------------
-
-	player := a.Players.Get(data.Uid)
-	if player == nil {
-		a.WriteMsgBytes(datamsg.NewMsgSC_Result(data.Uid, data.ConnectId, "no player"))
-		return
-	}
-
-	game := player.(*Game5GPlayer).Game
-	if game == nil {
-		a.WriteMsgBytes(datamsg.NewMsgSC_Result(data.Uid, data.ConnectId, "no game!"))
-
-		return
-	}
-
-	//玩家走棋
-	if err = game.DoGame5G(player.(*Game5GPlayer).SeatIndex, h2); err != nil {
-		a.WriteMsgBytes(datamsg.NewMsgSC_Result(data.Uid, data.ConnectId, "cannot go in game"))
-
-		return
-	}
 
 }
 
@@ -183,18 +143,7 @@ func (a *Game5GAgent) DoGoInData(data *datamsg.MsgBase) {
 	player.SeasonScore = playerinfo.SeasonScore
 	player.RankNum = playerinfo.RankNum
 	player.AvatarUrl = playerinfo.AvatarUrl
-	player.firstqiziId = playerinfo.FirstQiZi
-	player.secondqiziId = playerinfo.SecondQiZi
-	//player.steptime =
-	player.qiziId = -1
-
-	db.DbOne.GetPlayerManyInfo(player.Uid, "userbaseinfo", "qizi_move,qizi_move_trail,qizi_floor,qizi_lastplay,beiyongtime,steptime",
-		&player.qizi_move, &player.qizi_move_trail, &player.qizi_floor, &player.qizi_lastplay, &player.beiyongtime, &player.steptime)
-
-	//	qizi_move       int
-	//	qizi_move_trail int
-	//	qizi_floor      int
-	//	qizi_lastplay   int
+	player.SkinId = playerinfo.SkinId
 
 	//玩家加入游戏
 	if player, err = game.(*Game5GLogic).GoIn(player); err != nil {
@@ -246,11 +195,7 @@ func (a *Game5GAgent) DoNewGameData(data *datamsg.MsgBase) {
 		return
 	}
 
-	//time conf.Conf.Game5GInfo.Time
-	time := int(conf.Conf.Game5GInfo["SeasonMatching_Time"].(float64))
-	everytime := int(conf.Conf.Game5GInfo["SeasonMatching_EveryTime"].(float64))
-
-	game := NewGame5GLogic_SeasonMatching(a, int(h2["player1"].(float64)), int(h2["player2"].(float64)), time, everytime)
+	game := NewGame5GLogic_SeasonMatching(a)
 
 	a.Games.Set(game.GameId, game)
 

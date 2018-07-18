@@ -146,13 +146,13 @@ func (a *DB) newUser(machineid string, platfom string, phonenumber string, openi
 
 	day := time.Now().Format("2006-01-02")
 
-	res, err1 = tx.Exec("INSERT userbaseinfo (uid,name,gold,wincount,losecount,level,experience,seasonscore,avatarurl,firstqizi,secondqizi,isandroid,rigesterday) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+	res, err1 = tx.Exec("INSERT userbaseinfo (uid,name,gold,wincount,losecount,level,experience,seasonscore,avatarurl,skinid,secondqizi,isandroid,rigesterday) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
 		id, name, 0, 0, 0, 1, 0, 1000, "", 1001, 1002, isandroid, day)
 	//插入名字失败
 	if err1 != nil {
 
 		name = "yk_" + strconv.Itoa(int(id))
-		res, err1 = tx.Exec("INSERT userbaseinfo (uid,name,gold,wincount,losecount,level,experience,seasonscore,avatarurl,firstqizi,secondqizi,isandroid,rigesterday) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+		res, err1 = tx.Exec("INSERT userbaseinfo (uid,name,gold,wincount,losecount,level,experience,seasonscore,avatarurl,skinid,secondqizi,isandroid,rigesterday) values (?,?,?,?,?,?,?,?,?,?,?,?,?)",
 			id, name, 0, 0, 0, 1, 0, 1000, "", 1001, 1002, isandroid, day)
 		if err1 != nil {
 			log.Info("INSERT userbaseinfo err")
@@ -255,7 +255,7 @@ func (a *DB) CheckQuickLogin(machineid string, platfom string) int {
 //获取玩家基本信息
 func (a *DB) GetPlayerInfo(uid int, info *datamsg.MsgPlayerInfo) error {
 	info.Uid = uid
-	stmt, err := a.Mydb.Prepare("SELECT name,gold,wincount,losecount,seasonscore,avatarurl,firstqizi,secondqizi,isandroid,RankNum FROM userbaseinfo where uid=?")
+	stmt, err := a.Mydb.Prepare("SELECT name,gold,wincount,losecount,seasonscore,avatarurl,skinid,secondqizi,isandroid,RankNum FROM userbaseinfo where uid=?")
 
 	if err != nil {
 		log.Info(err.Error())
@@ -270,7 +270,7 @@ func (a *DB) GetPlayerInfo(uid int, info *datamsg.MsgPlayerInfo) error {
 	defer rows.Close()
 
 	if rows.Next() {
-		return rows.Scan(&info.Name, &info.Gold, &info.WinCount, &info.LoseCount, &info.SeasonScore, &info.AvatarUrl, &info.FirstQiZi, &info.SecondQiZi, &info.IsAndroid, &info.RankNum)
+		return rows.Scan(&info.Name, &info.Gold, &info.WinCount, &info.LoseCount, &info.SeasonScore, &info.AvatarUrl, &info.SkinId, &info.SecondQiZi, &info.IsAndroid, &info.RankNum)
 	} else {
 		log.Info("no user:%d", uid)
 		return errors.New("no user")
